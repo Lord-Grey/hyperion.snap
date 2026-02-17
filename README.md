@@ -60,7 +60,7 @@ sudo snap connect multipass:lxd lxd
 Now you can build the snap with the following command:
 
 ```bash
-SNAPCRAFT_BUILD_ENVIRONMENT=multipass snapcraft --debug
+SNAPCRAFT_BUILD_ENVIRONMENT=multipass snapcraft pack
 ```
 
 ### Developing the snap

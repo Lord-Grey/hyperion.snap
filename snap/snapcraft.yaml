@@ -1,9 +1,17 @@
 name: hyperion-ng
 adopt-info: hyperion-ng
+summary: Hyperion Ambient Lighting
+description: |
+  Hyperion is an open-source ambient lighting implementation for LED setups.
+  Supports multiple grabbers, protocols, and devices.
 
 base: core22
 grade: stable
 confinement: strict
+
+source-code: https://github.com/hyperion-project/hyperion.ng
+website: https://hyperion-project.org
+issues: https://github.com/hyperion-project/hyperion.ng/issues
 
 architectures:
   - build-on: amd64
@@ -37,18 +45,20 @@ apps:
 
 parts:
   hyperion-ng:
-    source: https://github.com/hyperion-project/hyperion.ng
-    source-type: git
+    source: https://github.com/hyperion-project/hyperion.ng.git
+    source-depth: 1
     plugin: cmake
     cmake-generator: Ninja
     cmake-parameters:
       - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_SKIP_RPATH=ON      
       - -DUSE_SYSTEM_MBEDTLS_LIBS=ON
       - -DUSE_SYSTEM_FLATBUFFERS_LIBS=ON
       - -DUSE_SYSTEM_PROTO_LIBS=ON
       - -DENABLE_DEPLOY_DEPENDENCIES=OFF
     parse-info:
       - usr/share/metainfo/com.hyperion-project.hyperion.metainfo.xml
+
     build-packages:
       - git
       - cmake
@@ -86,12 +96,13 @@ parts:
       - libxcb-shm0-dev
       - libxcb-render0-dev
       - libxcb-randr0-dev
+      - libdrm-dev
+
     stage-packages:
       - libqt6core6
       - libqt6gui6
       - libqt6network6
       - libqt6widgets6
-      - libqt6sql6
       - libqt6serialport6
       - libqt6sql6-sqlite
       - libqt6websockets6
@@ -105,16 +116,21 @@ parts:
       - libprotobuf23
       - libturbojpeg
       - libcec6
+
     override-pull: |
       craftctl default
       craftctl set version=$(cat .version)
+
+    override-build: |
+      craftctl default
       mkdir -p ${CRAFT_PART_INSTALL}/usr/share/icons/hicolor/256x256/apps
       cp ${CRAFT_PART_SRC}/resources/icons/hyperion-256px.png ${CRAFT_PART_INSTALL}/usr/share/icons/hicolor/256x256/apps/com.hyperion-project.hyperion.png
       mkdir -p ${CRAFT_PART_INSTALL}/usr/share/applications
       cp ${CRAFT_PART_SRC}/cmake/linux/desktop/hyperion.desktop ${CRAFT_PART_INSTALL}/usr/share/applications/com.hyperion-project.hyperion.desktop
-      sed -i 's|Icon=hyperion|Icon=${SNAP}/usr/share/icons/hicolor/256x256/apps/com.hyperion-project.hyperion.png|' ${CRAFT_PART_INSTALL}/usr/share/applications/com.hyperion-project.hyperion.desktop
+      sed -i 's|Icon=hyperion|Icon=\${SNAP}/usr/share/icons/hicolor/256x256/apps/com.hyperion-project.hyperion.png|' ${CRAFT_PART_INSTALL}/usr/share/applications/com.hyperion-project.hyperion.desktop    
       mkdir -p ${CRAFT_PART_INSTALL}/usr/share/metainfo
       cp ${CRAFT_PART_SRC}/cmake/linux/desktop/hyperion.metainfo.xml ${CRAFT_PART_INSTALL}/usr/share/metainfo/com.hyperion-project.hyperion.metainfo.xml
+
     stage:
       - -usr/local/share/hyperion/service
       - -usr/local/share/hyperion/icons
@@ -134,6 +150,7 @@ parts:
       - gtk-common-themes
     override-prime: |
       set -eux
-      for snap in "core22" "gnome-42-2204" "gtk-common-themes" ; do 
-        cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$SNAPCRAFT_PRIME/{}" \;
+      for snap in core22 gnome-42-2204 gtk-common-themes; do
+        cd /snap/$snap/current
+        find . -type f,l -exec rm -f "$SNAPCRAFT_PRIME/{}" \;
       done
